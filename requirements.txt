@@ -1,0 +1,8 @@
+gdown
+matplotlib
+networkx
+numpy
+pandas
+scipy
+scikit-learn
+tqdm

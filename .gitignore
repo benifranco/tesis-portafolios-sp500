@@ -1,0 +1,22 @@
+# Entornos virtuales
+.venv/
+env/
+venv/
+
+# Archivos de Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Datos y resultados pesados
+data/
+output/
+resultados/
+saved_figures/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
