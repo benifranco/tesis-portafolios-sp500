@@ -1,4 +1,4 @@
-# Portfolio Optimization using Spectral Clustering on Financial Networks
+# Portfolio Optimization using Spectral Clustering on Financial Networks 
 
 This repository contains the code and experiments developed as part of the master's thesis titled:
 
@@ -14,6 +14,24 @@ The main goal is to explore a portfolio construction strategy based on community
 * Select representative subsets of assets from detected communities.
 * Build minimum variance and maximum Sharpe portfolios using the selected assets.
 * Compare the performance of these reduced portfolios against full portfolios, both in short-selling and no-short-selling scenarios.
+
+---
+
+## Methodological Background and Original Contribution
+
+The empirical pipeline implemented in this repository is **strongly inspired** by the framework proposed in Arslan et al. (2024):  
+
+`https://arxiv.org/abs/2404.00187`
+
+In particular, the general structure of the backtesting procedure, the comparison between full-universe portfolios and reduced portfolios, and the emphasis on network-based asset-selection mechanisms follow the spirit of that work.
+
+However, **all the code in this repository is entirely original** and has been written from scratch for this thesis. The main methodological contribution with respect to Arslan et al. is the explicit use of **spectral clustering on correlation networks** as an additional asset-selection layer, together with a systematic comparison of different community-level representatives:
+
+* **MinVar**: asset with the lowest variance within each community.  
+* **MaxSharpe**: asset with the highest local Sharpe ratio within each community.  
+* **MaxReturn**: asset with the highest average return within each community.
+
+These community-based selection rules are then combined with classical Markowitz-type optimizers (minimum variance and maximum Sharpe) to study the trade-off between dimensionality reduction and portfolio performance.
 
 ---
 
