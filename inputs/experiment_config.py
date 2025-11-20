@@ -1,3 +1,5 @@
+# inputs/experiment_config.py
+
 from pathlib import Path
 import numpy as np
 
@@ -8,12 +10,15 @@ import numpy as np
 DATA_PATH = Path("data") / "close_prices.csv"
 OUTPUT_DIR = Path("output")
 
-# If you want to change the name of subfolders, do it here:
+# Subfolders inside OUTPUT_DIR
 CSV_SUBDIR = Path("csv")
 IMAGES_SUBDIR = Path("images")
 
+# Google Drive file ID for the close prices CSV
+DATA_FILE_ID = "1TsOGVI99XbDOf-bE3qwA6cKMOblyxDfX"
+
 # ---------------------------------------------------------------------
-# 2. Time horizon and data frequency
+# 2. Time horizon and frequency
 # ---------------------------------------------------------------------
 
 # Years used in the backtest
@@ -22,6 +27,11 @@ YEARS = range(1990, 2024)
 # Risk-free rate (annual) and data frequency
 RF = 0.0538      # annual risk-free rate
 FREQ = 252       # trading days per year
+
+# Minimum data requirements per year
+# (used to decide if a year is kept in the experiment)
+MIN_DAYS_PER_YEAR = 125
+MIN_ASSETS_PER_YEAR = 2
 
 # ---------------------------------------------------------------------
 # 3. Parameter grids (theta, k)
@@ -65,17 +75,54 @@ EXPERIMENT_PARAMS = {
     "window_corr": 125,
     "tau_corr": 125,
 
+    # Minimum sample requirements per year
+    "min_days_per_year": MIN_DAYS_PER_YEAR,
+    "min_assets_per_year": MIN_ASSETS_PER_YEAR,
+
     # Covariance matrix regularization
-    "regularization_type": "shrinkage",  # or "Ledoit-Wolf", etc.
+    "regularization_type": "shrinkage",  # or "ridge", "Ledoit-Wolf", etc.
     "lambda_reg": 1e-3,
 
-    # Optimization options (can be tuned from here)
-    "maxiter": 2000,
+    # Optimization options for SLSQP
     "ftol": 1e-9,
+    "maxiter": 2000,
+
+    # Frontier search for max Sharpe
+    "frontier_n_points": 500,
+
+    # Graph / spectral clustering tweaks
+    "epsilon_graph": 1e-9,
+    "eigen_tol": 1e-4,
+    "spectral_random_state": 42,
+
+    # Histograms
+    "hist_bins": 20,
 }
 
+
+#----------------------------------------------------------
+#Configuration complete only for testing
+
+# Years used in the backtest (test mode)
+YEARS = range(1990, 1993)  # 1990, 1991, 1992
+
+# Correlation thresholds (test: only one)
+THETA_GRID = np.array([0.0])
+
+# Number of communities k (test: only one)
+K_GRID = np.array([10])
+
+
+
+
+
+
+
+
+
+
 # ---------------------------------------------------------------------
-# 6. Master configuration dictionary
+# 6. Master configuration dictionary (optional convenience)
 # ---------------------------------------------------------------------
 
 EXPERIMENT_CONFIG = {
@@ -83,6 +130,7 @@ EXPERIMENT_CONFIG = {
     "output_dir": OUTPUT_DIR,
     "csv_subdir": CSV_SUBDIR,
     "images_subdir": IMAGES_SUBDIR,
+    "data_file_id": DATA_FILE_ID,
     "years": YEARS,
     "rf": RF,
     "freq": FREQ,
@@ -91,3 +139,5 @@ EXPERIMENT_CONFIG = {
     "scenarios": SCENARIOS,
     "params": EXPERIMENT_PARAMS,
 }
+
+
