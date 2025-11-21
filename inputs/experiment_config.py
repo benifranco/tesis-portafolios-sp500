@@ -15,7 +15,9 @@ CSV_SUBDIR = Path("csv")
 IMAGES_SUBDIR = Path("images")
 
 # Google Drive file ID for the close prices CSV
-DATA_FILE_ID = "1TsOGVI99XbDOf-bE3qwA6cKMOblyxDfX"
+#DATA_FILE_ID = "1TsOGVI99XbDOf-bE3qwA6cKMOblyxDfX" # Old file
+
+DATA_FILE_ID = "1ZpaVpxRM5WIfUCQrMDFS0zfH-3GLVmLa" # New file with full with 2024 data
 
 # ---------------------------------------------------------------------
 # 2. Time horizon and frequency
@@ -102,9 +104,11 @@ EXPERIMENT_PARAMS = {
 
 #----------------------------------------------------------
 #Configuration complete only for testing
+# ---------------------------------------------------------------------
+#  Test configuration (smaller grids, fewer years)
 
 # Years used in the backtest (test mode)
-YEARS = range(1990, 1993)  # 1990, 1991, 1992
+YEARS = range(2023, 2025)  # 1990, 1991, 1992
 
 # Correlation thresholds (test: only one)
 THETA_GRID = np.array([0.0])
