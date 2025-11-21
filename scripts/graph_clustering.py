@@ -35,7 +35,8 @@ def graph_from_adj(adj):
     return G
 
 
-def spectral_communities(G, k, epsilon=None, eigen_tol=None):
+def spectral_communities(G, k, epsilon=None, eigen_tol=None,
+                         return_labels=False, random_state=None):
     """
     Run spectral clustering on a graph using a precomputed affinity matrix.
 
@@ -51,18 +52,36 @@ def spectral_communities(G, k, epsilon=None, eigen_tol=None):
     eigen_tol : float or None
         Tolerance passed to SpectralClustering (eigen_tol).
         If None, it is taken from EXPERIMENT_PARAMS["eigen_tol"].
+    return_labels : bool, optional (default: False)
+        If False (default), behaves exactly as before and returns only
+        the communities dict. If True, it also returns the node order
+        and the cluster labels as a tuple:
+            (communities, nodes, labels).
+    random_state : int or None, optional
+        Seed for the SpectralClustering algorithm. If None, it is taken
+        from EXPERIMENT_PARAMS["spectral_random_state"].
 
     Returns
     -------
     communities : dict
         Mapping cluster_label -> list of node names.
+
+    Or, if return_labels is True:
+    communities : dict
+        Mapping cluster_label -> list of node names.
+    nodes : list
+        Node order used to build the affinity matrix.
+    labels : np.ndarray
+        Cluster labels aligned with 'nodes'.
     """
     if epsilon is None:
         epsilon = EXPERIMENT_PARAMS.get("epsilon_graph", 1e-9)
     if eigen_tol is None:
         eigen_tol = EXPERIMENT_PARAMS.get("eigen_tol", 1e-4)
 
-    random_state = EXPERIMENT_PARAMS.get("spectral_random_state", 42)
+    # Keep old behavior by default if random_state is not provided
+    if random_state is None:
+        random_state = EXPERIMENT_PARAMS.get("spectral_random_state", 42)
 
     nodes = list(G.nodes())
     A = nx.to_numpy_array(G, nodelist=nodes)
@@ -85,4 +104,9 @@ def spectral_communities(G, k, epsilon=None, eigen_tol=None):
     for node, label in zip(nodes, labels):
         communities.setdefault(label, []).append(node)
 
-    return communities
+    # Retrocompatible: same return as before
+    if not return_labels:
+        return communities
+
+    # New behavior when we explicitly ask for labels
+    return communities, nodes, labels
