@@ -24,7 +24,7 @@ DATA_FILE_ID = "1ZpaVpxRM5WIfUCQrMDFS0zfH-3GLVmLa" # New file with full with 202
 # ---------------------------------------------------------------------
 
 # Years used in the backtest
-YEARS = range(1990, 2024)
+YEARS = range(1990, 2025)
 
 # Risk-free rate (annual) and data frequency
 RF = 0.0538      # annual risk-free rate
@@ -108,14 +108,13 @@ EXPERIMENT_PARAMS = {
 #  Test configuration (smaller grids, fewer years)
 
 # Years used in the backtest (test mode)
-YEARS = range(2023, 2025)  # 1990, 1991, 1992
+#YEARS = range(2020, 2025)  # 1990, 1991, 1992
 
 # Correlation thresholds (test: only one)
-THETA_GRID = np.array([0.0])
+#THETA_GRID = np.array([0.0])
 
 # Number of communities k (test: only one)
-K_GRID = np.array([10])
-
+#K_GRID = np.array([10])
 
 
 SENSITIVITY_CONFIG = {
