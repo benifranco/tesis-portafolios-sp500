@@ -116,10 +116,12 @@ def run_spectral_sensitivity(close_prices):
 
     This function:
     - Restricts to years defined in SENSITIVITY_CONFIG["years"],
-    - Uses a fixed theta and k from SENSITIVITY_CONFIG,
+    - Uses a fixed theta from SENSITIVITY_CONFIG["theta"],
+    - Uses all k in SENSITIVITY_CONFIG["k_list"], or falls back to
+      a single SENSITIVITY_CONFIG["k"] if k_list is not defined,
     - Loops over a set of seeds from SENSITIVITY_CONFIG["seeds"],
-    - For each (year, seed, scenario) builds a MaxSharpe-MaxSharpe portfolio,
-    - Computes ARI vs the baseline seed=0 clustering,
+    - For each (year, k, seed, scenario) builds a MaxSharpe-MaxSharpe portfolio,
+    - Computes ARI vs the baseline seed=0 clustering for that (year, k),
     - Stores all results into a CSV file.
     """
     config = EXPERIMENT_CONFIG
@@ -128,8 +130,16 @@ def run_spectral_sensitivity(close_prices):
 
     years = sens["years"]
     theta = sens["theta"]
-    k = sens["k"]
     seeds = sens["seeds"]
+
+    # Support both:
+    # - SENSITIVITY_CONFIG["k_list"] = [5, 10, 15]
+    # - or legacy SENSITIVITY_CONFIG["k"] = 10
+    if "k_list" in sens:
+        k_list = sens["k_list"]
+    else:
+        # Fallback: use a single k
+        k_list = [sens["k"]]
 
     rf = config["rf"]
     freq = config["freq"]
@@ -149,7 +159,7 @@ def run_spectral_sensitivity(close_prices):
 
         returns_y = prices_y.pct_change().iloc[1:]
 
-        # Correlation and network
+        # Correlation and network (same for all k in this year)
         corr = exponential_smoothing_correlation(
             returns_y,
             window=params["window_corr"],
@@ -158,69 +168,76 @@ def run_spectral_sensitivity(close_prices):
         adj = binarize_corr(corr, theta)
         G = graph_from_adj(adj)
 
-        # Baseline clustering with seed=0
-        communities_ref, nodes_ref, labels_ref = spectral_communities(
-            G,
-            k,
-            return_labels=True,
-            random_state=0,
-        )
-
-        for seed in seeds:
-            # Clustering with current seed
-            communities, nodes_seed, labels_seed = spectral_communities(
+        for k in k_list:
+            # Baseline clustering with seed=0 for this (year, k)
+            communities_ref, nodes_ref, labels_ref = spectral_communities(
                 G,
                 k,
                 return_labels=True,
-                random_state=seed,
+                random_state=0,
             )
 
-            # ARI vs baseline clustering
-            y_ref, y_seed = _align_labels(nodes_ref, labels_ref, nodes_seed, labels_seed)
-            ari = adjusted_rand_score(y_ref, y_seed)
+            for seed in seeds:
+                # Clustering with current seed
+                communities, nodes_seed, labels_seed = spectral_communities(
+                    G,
+                    k,
+                    return_labels=True,
+                    random_state=seed,
+                )
 
-            # Representative selection (MaxSharpe per community)
-            selected = _select_representatives_maxsharpe(returns_y, rf, freq, communities)
-            if len(selected) < 2:
-                continue
+                # ARI vs baseline clustering for this (year, k)
+                y_ref, y_seed = _align_labels(
+                    nodes_ref, labels_ref, nodes_seed, labels_seed
+                )
+                ari = adjusted_rand_score(y_ref, y_seed)
 
-            for scen in scenarios:
-                code = scen["code"]
-                no_short = scen["no_short"]
-
-                # Build MaxSharpe portfolio on the selected assets
-                try:
-                    w, var_p, sr_p = max_sharpe_portfolio(
-                        returns_y[selected],
-                        rf=rf,
-                        freq=freq,
-                        lambda_reg=params["lambda_reg"],
-                        no_short=no_short,
-                        warn_negative=no_short,
-                    )
-                except Exception as e:
-                    # If optimization fails, skip this configuration
-                    print("Warning: optimization failed for year {}, seed {}, scenario {}: {}".format(
-                        year, seed, code, e
-                    ))
+                # Representative selection (MaxSharpe per community)
+                selected = _select_representatives_maxsharpe(
+                    returns_y, rf, freq, communities
+                )
+                if len(selected) < 2:
                     continue
 
-                ret_series = portfolio_returns(w, selected, returns_y)
-                mets = evaluate(ret_series)
+                for scen in scenarios:
+                    code = scen["code"]
+                    no_short = scen["no_short"]
 
-                records.append({
-                    "year": year,
-                    "theta": theta,
-                    "k": k,
-                    "seed": seed,
-                    "scenario": code,
-                    "n_selected_assets": len(selected),
-                    "ari_vs_seed0": ari,
-                    "sharpe": mets.get("sharpe", np.nan),
-                    "variance": mets.get("variance", np.nan),
-                    "total_return": mets.get("return", np.nan),
-                    "max_dd20": mets.get("max_dd20", np.nan),
-                })
+                    # Build MaxSharpe portfolio on the selected assets
+                    try:
+                        w, var_p, sr_p = max_sharpe_portfolio(
+                            returns_y[selected],
+                            rf=rf,
+                            freq=freq,
+                            lambda_reg=params["lambda_reg"],
+                            no_short=no_short,
+                            warn_negative=no_short,
+                        )
+                    except Exception as e:
+                        # If optimization fails, skip this configuration
+                        print(
+                            "Warning: optimization failed for year {}, k={}, seed {}, scenario {}: {}".format(
+                                year, k, seed, code, e
+                            )
+                        )
+                        continue
+
+                    ret_series = portfolio_returns(w, selected, returns_y)
+                    mets = evaluate(ret_series)
+
+                    records.append({
+                        "year": year,
+                        "theta": theta,
+                        "k": k,
+                        "seed": seed,
+                        "scenario": code,
+                        "n_selected_assets": len(selected),
+                        "ari_vs_seed0": ari,
+                        "sharpe": mets.get("sharpe", np.nan),
+                        "variance": mets.get("variance", np.nan),
+                        "total_return": mets.get("return", np.nan),
+                        "max_dd20": mets.get("max_dd20", np.nan),
+                    })
 
     df = pd.DataFrame(records)
 

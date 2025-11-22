@@ -120,10 +120,11 @@ K_GRID = np.array([10])
 
 SENSITIVITY_CONFIG = {
     # Years selected for robustness analysis of spectral clustering
-    "years": [2000, 2008, 2020, 2022],
+    "years": range(1990, 2024),  # 2020, 2021, 2022
     # Fixed parameters for the sensitivity experiment
     "theta": 0.0,
-    "k": 5,
+    "k_list": [5, 10, 15],
+    "k": 10,
     # Seeds to explore (spectral clustering random_state)
     "seeds": list(range(20)),  # 0, 1, ..., 19
 }
